@@ -17,6 +17,7 @@ library(marmap)      # access global topography data
 library(ggplot2)     # plotting functions
 library(vmstools)
 library(RColorBrewer)
+library(viridis)
 ## required libraries 
 
 
@@ -47,7 +48,9 @@ EEZ <- st_read("C:/Work/GIS/World_EEZ_v11_20191118/eez_boundaries_v11.shp") %>%
 ICES <- st_read("C:/Work/GIS/Shapefiles/ICES Areas/ICES_Areas_20160601_cut_dense_3857.shp") %>% 
   st_set_crs(st_crs(europa_sf))
 
-## add EEZ shapefile (download @: http://www.marineregions.org/downloads.php)
+load("C:/Work/GIS/Shapefiles/transfer.sf.rData")
+transfer.sf <- transfer.sf %>%
+  st_set_crs(st_crs(europa_sf))
 
 
 
@@ -95,19 +98,49 @@ for(i in 1:length(years)){
     cod.df <- as.data.frame(cod.sum, xy=TRUE) # Convert to data.frame, keeping the coordinates
     ## plotting in ggplot requires raster as a data frame
     
-    
+    cod.df$layer <- replace(cod.df$layer,cod.df$layer == 0, NA)
+
+    x_coord <- c(2.5,  2.5,  12, 12, 2.5)
+    y_coord <- c(55, 60, 60, 55, 55)
+    xym <- cbind(x_coord, y_coord)
+    p = Polygon(xym)
+    ps = Polygons(list(p),1)
+    sps = SpatialPolygons(list(ps))
+    sps_sf <- st_as_sf(sps)
+
+    zoom.Max <- extract(cod.sum,sps_sf,na.rm=TRUE, fun=max)
+    zoom.Sum <- extract(cod.sum,sps_sf,na.rm=TRUE, fun=sum)
+
     print(ggplot() +
+            geom_sf(data=ICES, fill="transparent",col="black") +
+            geom_sf(data=transfer.sf,fill="transparent",linetype = "11", size = 1) +
+            #geom_sf(data=sps_sf,col="red",fill="transparent") +
             geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
             geom_sf(data=europa_sf) +
-            geom_sf(data=EEZ,col="white") +
-            #geom_sf(data=ICES, color=alpha("red",0.2)) +
+            #geom_sf(data=EEZ,col="white") +
             coord_sf(xlim = c(-4, 12), ylim = c(48, 62),expand=FALSE) +
-            scale_colour_gradientn(colours = heat.colors(100)) +
+            scale_fill_viridis(option="plasma",direction=-1,na.value="transparent") +
             ggtitle(paste("Herring, Q1 ", years[i], " " ,mesh.sizes[2]," gears", sep =""),
             subtitle = paste("Total = ", round(sum(raster.stack@data@values), 0), "t", sep=" ")) +
-            labs(x = "Longitude", y= "Latitude") +
-            theme_bw())
-    
+            labs(x = "Longitude", y= "Latitude",fill="(t)") +
+            theme_bw() +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank()))
+
+    print(ggplot() +
+            geom_sf(data=ICES, fill="transparent",col="black") +
+            geom_sf(data=transfer.sf,fill="white",linetype = "11", size = 1) +
+            geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
+            #geom_sf(data=EEZ,col="white") +
+            geom_sf(data=europa_sf) +
+            coord_sf(xlim = c(2.5, 12), ylim = c(55, 60),expand=FALSE) +
+            scale_fill_viridis(option="plasma",limits = c(0.1, zoom.Max), direction=-1,na.value="transparent") +
+            ggtitle(paste("Herring, Q1 ", years[i], " " ,mesh.sizes[2]," gears", sep =""),
+                    subtitle = paste("Total = ", round(zoom.Sum, 0), "t", sep=" ")) +
+            labs(x = "Longitude", y= "Latitude",fill="(t)") +
+            theme_bw() +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank()))
 
     ## Q2
     
@@ -336,18 +369,49 @@ for(i in 1:length(years)){
   cod.df <- as.data.frame(cod.sum, xy=TRUE) # Convert to data.frame, keeping the coordinates
   ## plotting in ggplot requires raster as a data frame
   
-  
-  print(ggplot() +
-          geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
-          geom_sf(data=europa_sf) +
-          geom_sf(data=EEZ,col="white") +
-          #geom_sf(data=ICES, color=alpha("red",0.2)) +
-          coord_sf(xlim = c(-4, 12), ylim = c(48, 62),expand=FALSE) +
-          scale_colour_gradientn(colours = heat.colors(100)) +
-          ggtitle(paste("Herring, Q2 ", years[i], " " ,mesh.sizes[1]," gears", sep =""),
-                  subtitle = paste("Total = ", round(sum(raster.stack@data@values), 0), "t", sep=" ")) +
-          labs(x = "Longitude", y= "Latitude") +
-          theme_bw())
+  cod.df$layer <- replace(cod.df$layer,cod.df$layer == 0, NA)
+
+    x_coord <- c(2.5,  2.5,  12, 12, 2.5)
+    y_coord <- c(55, 60, 60, 55, 55)
+    xym <- cbind(x_coord, y_coord)
+    p = Polygon(xym)
+    ps = Polygons(list(p),1)
+    sps = SpatialPolygons(list(ps))
+    sps_sf <- st_as_sf(sps)
+
+    zoom.Max <- extract(cod.sum,sps_sf,na.rm=TRUE, fun=max)
+    zoom.Sum <- extract(cod.sum,sps_sf,na.rm=TRUE, fun=sum)
+
+    print(ggplot() +
+            geom_sf(data=ICES, fill="transparent",col="black") +
+            geom_sf(data=transfer.sf,fill="transparent",linetype = "11", size = 1) +
+            #geom_sf(data=sps_sf,col="red",fill="transparent") +
+            geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
+            geom_sf(data=europa_sf) +
+            #geom_sf(data=EEZ,col="white") +
+            coord_sf(xlim = c(-4, 12), ylim = c(48, 62),expand=FALSE) +
+            scale_fill_viridis(option="plasma",direction=-1,na.value="transparent") +
+            ggtitle(paste("Herring, Q2 ", years[i], " " ,mesh.sizes[2]," gears", sep =""),
+                    subtitle = paste("Total = ", round(sum(raster.stack@data@values), 0), "t", sep=" ")) +
+            labs(x = "Longitude", y= "Latitude",fill="(t)") +
+            theme_bw() +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank()))
+
+    print(ggplot() +
+            geom_sf(data=ICES, fill="transparent",col="black") +
+            geom_sf(data=transfer.sf,fill="white",linetype = "11", size = 1) +
+            geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
+            #geom_sf(data=EEZ,col="white") +
+            geom_sf(data=europa_sf) +
+            coord_sf(xlim = c(2.5, 12), ylim = c(55, 60),expand=FALSE) +
+            scale_fill_viridis(option="plasma",limits = c(0.1, zoom.Max), direction=-1,na.value="transparent") +
+            ggtitle(paste("Herring, Q2 ", years[i], " " ,mesh.sizes[2]," gears", sep =""),
+                    subtitle = paste("Total = ", round(zoom.Sum, 0), "t", sep=" ")) +
+            labs(x = "Longitude", y= "Latitude",fill="(t)") +
+            theme_bw() +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank()))
   
   
   ## Q3
@@ -383,18 +447,49 @@ for(i in 1:length(years)){
   ## plotting in ggplot requires raster as a data frame
   
   
-  print(ggplot() +
-          geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
-          geom_sf(data=europa_sf) +
-          geom_sf(data=EEZ,col="white") +
-          #geom_sf(data=ICES, color=alpha("red",0.2)) +
-          coord_sf(xlim = c(-4, 12), ylim = c(48, 62),expand=FALSE) +
-          scale_colour_gradientn(colours = heat.colors(100)) +
-          ggtitle(paste("Herring, Q3 ", years[i], " " ,mesh.sizes[1]," gears", sep =""),
-                  subtitle = paste("Total = ", round(sum(raster.stack@data@values), 0), "t", sep=" ")) +
-          labs(x = "Longitude", y= "Latitude") +
-          theme_bw())
-  
+    cod.df$layer <- replace(cod.df$layer,cod.df$layer == 0, NA)
+
+    x_coord <- c(2.5,  2.5,  12, 12, 2.5)
+    y_coord <- c(55, 60, 60, 55, 55)
+    xym <- cbind(x_coord, y_coord)
+    p = Polygon(xym)
+    ps = Polygons(list(p),1)
+    sps = SpatialPolygons(list(ps))
+    sps_sf <- st_as_sf(sps)
+
+    zoom.Max <- extract(cod.sum,sps_sf,na.rm=TRUE, fun=max)
+    zoom.Sum <- extract(cod.sum,sps_sf,na.rm=TRUE, fun=sum)
+
+    print(ggplot() +
+            geom_sf(data=ICES, fill="transparent",col="black") +
+            geom_sf(data=transfer.sf,fill="transparent",linetype = "11", size = 1) +
+            #geom_sf(data=sps_sf,col="red",fill="transparent") +
+            geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
+            geom_sf(data=europa_sf) +
+            #geom_sf(data=EEZ,col="white") +
+            coord_sf(xlim = c(-4, 12), ylim = c(48, 62),expand=FALSE) +
+            scale_fill_viridis(option="plasma",direction=-1,na.value="transparent") +
+            ggtitle(paste("Herring, Q3 ", years[i], " " ,mesh.sizes[2]," gears", sep =""),
+                    subtitle = paste("Total = ", round(sum(raster.stack@data@values), 0), "t", sep=" ")) +
+            labs(x = "Longitude", y= "Latitude",fill="(t)") +
+            theme_bw() +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank()))
+
+    print(ggplot() +
+            geom_sf(data=ICES, fill="transparent",col="black") +
+            geom_sf(data=transfer.sf,fill="white",linetype = "11", size = 1) +
+            geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
+            #geom_sf(data=EEZ,col="white") +
+            geom_sf(data=europa_sf) +
+            coord_sf(xlim = c(2.5, 12), ylim = c(55, 60),expand=FALSE) +
+            scale_fill_viridis(option="plasma",limits = c(0.1, zoom.Max), direction=-1,na.value="transparent") +
+            ggtitle(paste("Herring, Q3 ", years[i], " " ,mesh.sizes[2]," gears", sep =""),
+                    subtitle = paste("Total = ", round(zoom.Sum, 0), "t", sep=" ")) +
+            labs(x = "Longitude", y= "Latitude",fill="(t)") +
+            theme_bw() +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank()))
   
   ###  Q4
   
@@ -428,18 +523,50 @@ for(i in 1:length(years)){
   cod.df <- as.data.frame(cod.sum, xy=TRUE) # Convert to data.frame, keeping the coordinates
   ## plotting in ggplot requires raster as a data frame
   
-  
-  print(ggplot() +
-          geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
-          geom_sf(data=europa_sf) +
-          geom_sf(data=EEZ,col="white") +
-          #geom_sf(data=ICES, color=alpha("red",0.2)) +
-          coord_sf(xlim = c(-4, 12), ylim = c(48, 62),expand=FALSE) +
-          scale_colour_gradientn(colours = heat.colors(100)) +
-          ggtitle(paste("Herring, Q4 ", years[i], " " ,mesh.sizes[1]," gears", sep =""),
-                  subtitle = paste("Total = ", round(sum(raster.stack@data@values), 0), "t", sep=" ")) +
-          labs(x = "Longitude", y= "Latitude") +
-          theme_bw())
+    cod.df$layer <- replace(cod.df$layer,cod.df$layer == 0, NA)
+
+    x_coord <- c(2.5,  2.5,  12, 12, 2.5)
+    y_coord <- c(55, 60, 60, 55, 55)
+    xym <- cbind(x_coord, y_coord)
+    p = Polygon(xym)
+    ps = Polygons(list(p),1)
+    sps = SpatialPolygons(list(ps))
+    sps_sf <- st_as_sf(sps)
+
+    zoom.Max <- extract(cod.sum,sps_sf,na.rm=TRUE, fun=max)
+    zoom.Sum <- extract(cod.sum,sps_sf,na.rm=TRUE, fun=sum)
+
+    print(ggplot() +
+            geom_sf(data=ICES, fill="transparent",col="black") +
+            geom_sf(data=transfer.sf,fill="transparent",linetype = "11", size = 1) +
+            #geom_sf(data=sps_sf,col="red",fill="transparent") +
+            geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
+            geom_sf(data=europa_sf) +
+            #geom_sf(data=EEZ,col="white") +
+            coord_sf(xlim = c(-4, 12), ylim = c(48, 62),expand=FALSE) +
+            scale_fill_viridis(option="plasma",direction=-1,na.value="transparent") +
+            ggtitle(paste("Herring, Q4 ", years[i], " " ,mesh.sizes[2]," gears", sep =""),
+                    subtitle = paste("Total = ", round(sum(raster.stack@data@values), 0), "t", sep=" ")) +
+            labs(x = "Longitude", y= "Latitude",fill="(t)") +
+            theme_bw() +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank()))
+
+    print(ggplot() +
+            geom_sf(data=ICES, fill="transparent",col="black") +
+            geom_sf(data=transfer.sf,fill="white",linetype = "11", size = 1) +
+            geom_raster(data = cod.df, aes(x = x, y = y, fill = layer)) +
+            #geom_sf(data=EEZ,col="white") +
+            geom_sf(data=europa_sf) +
+            coord_sf(xlim = c(2.5, 12), ylim = c(55, 60),expand=FALSE) +
+            scale_fill_viridis(option="plasma",limits = c(0.1, zoom.Max), direction=-1,na.value="transparent") +
+            ggtitle(paste("Herring, Q4 ", years[i], " " ,mesh.sizes[2]," gears", sep =""),
+                    subtitle = paste("Total = ", round(zoom.Sum, 0), "t", sep=" ")) +
+            labs(x = "Longitude", y= "Latitude",fill="(t)") +
+            theme_bw() +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank()))
+
   
 }
 
